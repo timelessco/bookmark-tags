@@ -1,10 +1,14 @@
 import { type NextApiResponse } from "next";
+// import chromium from "@sparticuz/chromium-min";
 import { type PostgrestError } from "@supabase/supabase-js";
-import axios from "axios";
 import { decode } from "base64-arraybuffer";
+import chromium from "chrome-aws-lambda";
 import { type VerifyErrors } from "jsonwebtoken";
 import jwtDecode from "jwt-decode";
 import { isNull } from "lodash";
+// import { chromium } from "playwright";
+// import { launch } from "puppeteer";
+import puppeteer from "puppeteer-core";
 import uniqid from "uniqid";
 
 import {
@@ -15,7 +19,6 @@ import {
 import {
 	BOOKMAKRS_STORAGE_NAME,
 	MAIN_TABLE_NAME,
-	SCREENSHOT_API,
 	STORAGE_SCREENSHOT_IMAGES_PATH,
 } from "../../../utils/constants";
 import {
@@ -23,9 +26,60 @@ import {
 	verifyAuthToken,
 } from "../../../utils/supabaseServerClient";
 
+// import { chromium } from "playwright";
+
 type Data = {
 	data: SingleListData[] | null;
 	error: PostgrestError | VerifyErrors | string | null;
+};
+
+const takeScreenshot = async (url: string) => {
+	// const browser = await launch();
+
+	// const browser = await puppeteer.launch({
+	// 	args: [...chromium.args, "--hide-scrollbars", "--disable-web-security"],
+	// 	defaultViewport: chromium.defaultViewport,
+	// 	executablePath: await chromium.executablePath,
+	// 	headless: true,
+	// 	ignoreHTTPSErrors: true,
+	// });
+
+	// const browser = await launch({
+	// 	args: [
+	// 		...chromium.args,
+	// 		"--hide-scrollbars",
+	// 		"--disable-web-security",
+	// 		"--disable-extensions",
+	// 	],
+	// 	defaultViewport: chromium.defaultViewport,
+	// 	executablePath: await chromium.executablePath(
+	// 		`https://github.com/Sparticuz/chromium/releases/download/v116.0.0/chromium-v116.0.0-pack.tar`,
+	// 	),
+	// 	headless: chromium.headless,
+	// 	ignoreHTTPSErrors: true,
+	// });
+
+	// eslint-disable-next-line import/no-named-as-default-member
+	const browser = await puppeteer.launch({
+		args: chromium.args,
+		executablePath: await chromium.executablePath,
+		headless: chromium.headless as boolean,
+	});
+
+	const page = await browser.newPage();
+
+	// const context = await browser.newContext();
+
+	// const page = await context.newPage();
+
+	await page.goto(url, { waitUntil: "load" });
+
+	const buffer = await page.screenshot();
+
+	await page.close();
+	await browser.close();
+
+	return buffer;
 };
 
 export default async function handler(
@@ -69,18 +123,22 @@ export default async function handler(
 	const userId = tokenDecode?.sub;
 
 	// screen shot api call
-	const screenShotResponse = await axios.request({
-		method: "POST",
-		url: SCREENSHOT_API,
-		headers: {
-			"content-type": "application/json",
-			Authorization: `Bearer ${process.env.SCREENSHOT_TOKEN}`,
-		},
-		data: { url: request.body.url },
-		responseType: "arraybuffer",
-	});
+	// const screenShotResponse = await axios.request({
+	// 	method: "POST",
+	// 	url: SCREENSHOT_API,
+	// 	headers: {
+	// 		"content-type": "application/json",
+	// 		Authorization: `Bearer ${process.env.SCREENSHOT_TOKEN}`,
+	// 	},
+	// 	data: { url: request.body.url },
+	// 	responseType: "arraybuffer",
+	// });
 
-	const base64data = Buffer.from(screenShotResponse.data, "binary").toString(
+	const screenShotResponse = (await takeScreenshot(
+		request.body.url,
+	)) as unknown as string;
+
+	const base64data = Buffer.from(screenShotResponse, "binary").toString(
 		"base64",
 	);
 
