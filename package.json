@@ -93,7 +93,7 @@
 		"@sentry/nextjs": "^7.73.0",
 		"@supabase/ssr": "0.3.0",
 		"@supabase/supabase-js": "2.13.1",
-		"@tanstack/react-query": "4.28.0",
+		"@tanstack/react-query": "5.28.14",
 		"allotment": "1.18.1",
 		"ariakit": "2.0.0-next.43",
 		"array-to-image": "^1.0.0",
