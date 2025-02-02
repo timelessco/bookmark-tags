@@ -216,7 +216,7 @@
 	},
 	"pnpm": {
 		"overrides": {
-			"@swc/helpers@~0.4": "0.4.36"
+			"@swc/helpers@~0.4": "0.5.15"
 		}
 	}
 }
